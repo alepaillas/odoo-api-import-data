@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "./src/main.ts",
+  "main": "./src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node  --experimental-transform-types ./src/main.ts"
+    "dev": "node  --experimental-transform-types ./src/index.ts"
   },
   "repository": {
     "type": "git",
@@ -20,5 +20,8 @@
   "homepage": "https://github.com/alepaillas/odoo-api-import-data#readme",
   "devDependencies": {
     "dotenv": "^16.5.0"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
   }
 }

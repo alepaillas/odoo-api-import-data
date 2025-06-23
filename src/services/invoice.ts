@@ -1,13 +1,12 @@
-// src/index.ts
-import { ODOO_URL, ODOO_DB, ODOO_USERNAME, ODOO_PASSWORD } from './utils/env.ts';
-import type { InvoiceData } from "./interfaces/InvoiceData.ts";
-import { authenticate } from './services/auth.ts';
+import { ODOO_URL, ODOO_DB, ODOO_USERNAME, ODOO_PASSWORD } from '../utils/env.ts';
+import type { InvoiceData } from "../interfaces/invoice_data.ts";
+import { authenticate } from '../services/auth.ts';
 
 if (!ODOO_URL || !ODOO_DB || !ODOO_USERNAME || !ODOO_PASSWORD) {
     throw new Error('Missing environment variables');
 }
 
-async function createInvoice(invoiceData: InvoiceData) {
+export async function createInvoice(invoiceData: InvoiceData) {
     try {
         const { sessionId, userId } = await authenticate()
 
@@ -45,18 +44,3 @@ async function createInvoice(invoiceData: InvoiceData) {
         console.error('Error creating invoice:', error);
     }
 }
-
-// Example usage
-const invoiceData: InvoiceData = {
-    partner_id: 39,
-    move_type: 'out_invoice',
-    invoice_line_ids: [
-        [0, 0, {
-            product_id: 5,
-            quantity: 1,
-            price_unit: 100,
-        }],
-    ],
-};
-
-createInvoice(invoiceData);
