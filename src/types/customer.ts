@@ -15,9 +15,9 @@ export interface Customer {
   code: string;
   name_payment: string | null;
   phone_payment: string;
-  email: string[];
+  email: string;
   business_contact: string | null;
-  email_commercial: string[];
+  email_commercial: string;
   phone: string | null;
   mobile: string | null;
   reference: string | null;
