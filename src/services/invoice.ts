@@ -1,46 +1,120 @@
-import { ODOO_URL, ODOO_DB, ODOO_USERNAME, ODOO_PASSWORD } from '../utils/env.ts';
+// src/services/invoice.ts
 import type { InvoiceData } from "../interfaces/invoice_data.ts";
-import { authenticate } from '../services/auth.ts';
+import { makeAuthenticatedRequest } from './auth.ts';
 
-if (!ODOO_URL || !ODOO_DB || !ODOO_USERNAME || !ODOO_PASSWORD) {
-    throw new Error('Missing environment variables');
-}
-
-export async function createInvoice(invoiceData: InvoiceData) {
+export async function createInvoice(invoiceData: InvoiceData): Promise<number> {
     try {
-        const { sessionId, userId } = await authenticate()
-
-        // Prepare the data for creating the invoice
-        const data = {
+        const createData = {
             jsonrpc: '2.0',
             method: 'call',
             params: {
-                service: 'object',
-                method: 'execute',
-                args: [
-                    ODOO_DB,
-                    userId,
-                    ODOO_PASSWORD,
-                    'account.move',
-                    'create',
-                    invoiceData
-                ],
+                model: 'account.move',
+                method: 'create',
+                args: [invoiceData],
+                kwargs: {},
             },
         };
 
-        // Make the request to create the invoice
-        const response = await fetch(`${ODOO_URL}/jsonrpc`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Cookie': `session_id=${sessionId}`,
-            },
-            body: JSON.stringify(data),
-        });
+        const result = await makeAuthenticatedRequest(createData);
+        console.log('Invoice created with ID:', result.result);
+        return result.result;
 
-        const responseData = await response.json();
-        console.log('Invoice creation response:', responseData);
     } catch (error) {
         console.error('Error creating invoice:', error);
+        throw error;
+    }
+}
+
+export async function getInvoice(invoiceId: number): Promise<any> {
+    try {
+        const readData = {
+            jsonrpc: '2.0',
+            method: 'call',
+            params: {
+                model: 'account.move',
+                method: 'read',
+                args: [invoiceId, ['name', 'partner_id', 'amount_total', 'state', 'invoice_date']],
+                kwargs: {},
+            },
+        };
+
+        const result = await makeAuthenticatedRequest(readData);
+        return result.result;
+
+    } catch (error) {
+        console.error('Error getting invoice:', error);
+        throw error;
+    }
+}
+
+export async function findInvoice(documentNumber: string): Promise<number | null> {
+    try {
+        const searchData = {
+            jsonrpc: '2.0',
+            method: 'call',
+            params: {
+                model: 'account.move',
+                method: 'search',
+                args: [[['l10n_latam_document_number', '=', documentNumber]]],
+                kwargs: {},
+            },
+        };
+
+        const result = await makeAuthenticatedRequest(searchData);
+
+        if (!result.result || !Array.isArray(result.result) || result.result.length === 0) {
+            console.log('No invoice found with document number:', documentNumber);
+            return null;
+        }
+
+        return result.result[0];
+
+    } catch (error) {
+        console.error('Error finding invoice:', error);
+        throw error;
+    }
+}
+
+export async function confirmInvoice(invoiceId: number): Promise<void> {
+    try {
+        const confirmData = {
+            jsonrpc: '2.0',
+            method: 'call',
+            params: {
+                model: 'account.move',
+                method: 'action_post',
+                args: [invoiceId],
+                kwargs: {},
+            },
+        };
+
+        await makeAuthenticatedRequest(confirmData);
+        console.log('Invoice confirmed:', invoiceId);
+
+    } catch (error) {
+        console.error('Error confirming invoice:', error);
+        throw error;
+    }
+}
+
+export async function cancelInvoice(invoiceId: number): Promise<void> {
+    try {
+        const cancelData = {
+            jsonrpc: '2.0',
+            method: 'call',
+            params: {
+                model: 'account.move',
+                method: 'button_cancel',
+                args: [invoiceId],
+                kwargs: {},
+            },
+        };
+
+        await makeAuthenticatedRequest(cancelData);
+        console.log('Invoice cancelled:', invoiceId);
+
+    } catch (error) {
+        console.error('Error cancelling invoice:', error);
+        throw error;
     }
 }
