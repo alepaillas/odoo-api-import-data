@@ -1,0 +1,24 @@
+{
+  "name": "odoo-api-import-data",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./src/main.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node  --experimental-transform-types ./src/main.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alepaillas/odoo-api-import-data.git"
+  },
+  "author": "Alejandra Paillas",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/alepaillas/odoo-api-import-data/issues"
+  },
+  "homepage": "https://github.com/alepaillas/odoo-api-import-data#readme",
+  "devDependencies": {
+    "dotenv": "^16.5.0"
+  }
+}
