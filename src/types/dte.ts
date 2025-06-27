@@ -27,6 +27,7 @@ export interface Dte {
   channel_id: number | null;
   type_payment_id: number | null;
   seller_id: number | null;
+  seller_name: string;
   label_value: string | null;
   status: string;
   comment: string | null;
