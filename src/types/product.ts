@@ -1,4 +1,6 @@
 export interface Product {
+  dte_id: number;
+  dte_folio: number;
   product_id: number;
   name: string;
   url_image: string | null;

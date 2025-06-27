@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { readFileSync } from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import type { InvoiceData } from "./interfaces/invoice_data.ts";
+import type { InvoiceData, InvoiceLine } from "./interfaces/invoice_data.ts";
 import type { Dte } from "./types/dte.ts";
 import type { Product } from "./types/product.ts";
 import type { Customer } from "./types/customer.ts";
@@ -16,6 +16,7 @@ import type { CreatePartnerType } from "./services/interfaces/partner.ts";
 import { findRegionByCommune } from "./services/territory.ts";
 import { paymentTermMapper } from "./utils/paymentTermMapper.ts";
 import { mapRegionToStateId } from "./utils/regionMapper.ts";
+import { createProduct, findProductByCode } from "./services/product.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -157,25 +158,62 @@ for (const dte of dtes) {
       console.log(newPartnerId);
     }
 
+    // Find all products for this DTE
+    const dteProducts = products.filter(
+      (product) => product.dte_folio === dte.folio
+    );
+
+    // Prepare invoice lines from the products
+    const invoiceLines: InvoiceLine[] = await Promise.all(
+      dteProducts.map(async (product) => {
+        // First try to find the product by code
+        let productId = await findProductByCode(product.code);
+        console.log(`Product ID: ${productId}`);
+
+        // If product doesn't exist, create it
+        if (!productId) {
+          console.log(
+            `Product with code ${product.code} not found, creating...`
+          );
+          productId = await createProduct({
+            name: product.name,
+            default_code: product.code,
+            list_price: product.price,
+            standard_price: product.unit_cost,
+            description_sale: product.description,
+            is_storable: true,
+          });
+          console.log(`Created product with ID: ${productId}`);
+        } else {
+          console.log(`Found existing product with ID: ${productId}`);
+        }
+
+        // Create the invoice line with proper typing
+        const line: InvoiceLine = [
+          0, // Command to create a new record
+          0, // Let Odoo assign the ID
+          {
+            product_id: productId,
+            quantity: product.quantity,
+            price_unit: product.price,
+            name: product.description || product.name,
+            ...(product.discount && { discount: product.discount }),
+          },
+        ];
+
+        return line;
+      })
+    );
+
     let invoicePaymentType: number;
     invoicePaymentType = paymentTermMapper(dte.type_payment_id);
 
     const invoiceData: InvoiceData = {
-      l10n_latam_document_number: dte.folio,
+      l10n_latam_document_number: `${dte.folio}`,
       partner_id: partnerId ? partnerId : newPartnerId,
       move_type: "out_invoice",
       invoice_date: dte.start_date,
-      invoice_line_ids: [
-        [
-          0,
-          0,
-          {
-            product_id: 5,
-            quantity: 1,
-            price_unit: 100,
-          },
-        ],
-      ],
+      invoice_line_ids: invoiceLines,
       invoice_date_due: dte.end_date,
       invoice_payment_term_id: invoicePaymentType,
       ref: dte.seller_name,
