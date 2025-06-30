@@ -233,7 +233,7 @@ for (const dte of dtes) {
         throw new Error("DTE child not found");
       }
       dteChild = dteChildFound;
-      invoiceRef = `${dteChild.folio} - ${dte.seller_name}`
+      invoiceRef = `${dteChild.folio}`
     }
 
     const invoiceData: InvoiceData = {
