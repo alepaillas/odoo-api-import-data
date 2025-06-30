@@ -80,8 +80,10 @@ export interface Dte {
 }
 
 export interface DteChild {
+  dte_id: number,
+  dte_folio: number,
   id: number;
-  folio: number;
+  folio: string;
   type_document: number;
   type_document_name: string;
 }

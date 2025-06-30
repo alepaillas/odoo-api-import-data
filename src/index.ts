@@ -4,13 +4,13 @@ import { readFileSync } from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import type { InvoiceData, InvoiceLine } from "./interfaces/invoice_data.ts";
-import type { Dte } from "./types/dte.ts";
+import type { Dte, DteChild } from "./types/dte.ts";
 import type { Product } from "./types/product.ts";
 import type { Customer } from "./types/customer.ts";
 import type { Commune } from "./types/commune.ts";
 import type { City } from "./types/city.ts";
 import type { PaymentType } from "./types/payment_type.ts";
-import { confirmInvoice, createInvoice } from "./services/invoice.ts";
+import { cancelInvoice, confirmInvoice, createInvoice, findInvoice } from "./services/invoice.ts";
 import { createPartner, findPartner } from "./services/partner.ts";
 import type { CreatePartnerType } from "./services/interfaces/partner.ts";
 import { findRegionByCommune } from "./services/territory.ts";
@@ -19,6 +19,7 @@ import { mapRegionToStateId } from "./utils/regionMapper.ts";
 import { createProduct, findProductByCode } from "./services/product.ts";
 import { createPayment, isInvoicePaid, postPayment, processPaymentAndReconcile } from "./services/payment.ts";
 import type { PaymentData } from "./services/interfaces/payment.ts";
+import { getMoveType } from "./utils/getMoveType.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +28,10 @@ const filePath = path.resolve(
   __dirname,
   "../data/dtes/facturas/dtes_type33_2025_01.xlsx"
 );
+// const filePath = path.resolve(
+//   __dirname,
+//   "../data/dtes/notas de credito/dtes_type61_2025_01.xlsx"
+// );
 const workbook = XLSX.read(readFileSync(filePath), { type: "buffer" });
 
 const dtesSheet = workbook.Sheets["DTEs"];
@@ -53,6 +58,11 @@ const paymentTypesSheet = workbook.Sheets["Payment_Types"];
 const jsonPaymentTypesSheet: unknown[] =
   XLSX.utils.sheet_to_json(paymentTypesSheet);
 const paymentTypes: PaymentType[] = jsonPaymentTypesSheet as PaymentType[];
+
+const dteChildrenSheet = workbook.Sheets["DTE_Children"];
+const jsonDteChildrenSheet: unknown[] =
+  XLSX.utils.sheet_to_json(dteChildrenSheet);
+const dteChildren: DteChild[] = jsonDteChildrenSheet as DteChild[];
 
 for (const dte of dtes) {
   try {
@@ -210,23 +220,52 @@ for (const dte of dtes) {
     let invoicePaymentType: number;
     invoicePaymentType = paymentTermMapper(dte.type_payment_id);
 
+    const moveType = getMoveType(dte.type_document);
+    const isInvoice = moveType === 'out_invoice';
+    const isCreditNote = moveType === 'out_refund';
+
+    let dteChild: DteChild | undefined; // Initialize as undefined
+    let invoiceRef = dte.seller_name;
+
+    if (moveType === 'out_refund') {
+      const dteChildFound = dteChildren.find((dteChild) => dteChild.dte_folio == dte.folio);
+      if (!dteChildFound) {
+        throw new Error("DTE child not found");
+      }
+      dteChild = dteChildFound;
+      invoiceRef = `${dteChild.folio}`
+    }
+
     const invoiceData: InvoiceData = {
       l10n_latam_document_number: `${dte.folio}`,
       partner_id: partnerId ? partnerId : newPartnerId,
-      move_type: "out_invoice",
+      move_type: moveType,
       invoice_date: dte.start_date,
       invoice_line_ids: invoiceLines,
       invoice_date_due: dte.end_date,
       invoice_payment_term_id: invoicePaymentType,
-      ref: dte.seller_name,
+      ref: invoiceRef,
       narration: `Contacto: ${dte.contact} | Nota: ${dte.comment}`,
       journal_id: 1, // customer invoices anfisbena
       // journal_id: 17, // facturas relbase integramundo
     };
     console.log(invoiceData);
 
+    // // If it's a credit note and you have a reference to the original invoice
+    // if (isCreditNote && dteChild && dteChild.folio) { // Added null check for dteChild
+    //   const originalInvoiceId = await findInvoice(dteChild.folio);
+    //   if (originalInvoiceId) {
+    //     invoiceData.reversed_entry_id = originalInvoiceId;
+    //   }
+    // }
+
     const newInvoice = await createInvoice(invoiceData);
     // console.log(newInvoice);
+
+    // if (dte.status === 'cancel') {
+    //   await cancelInvoice(newInvoice)
+    //   console.log(`Cancelled invoice with ID: ${newInvoice}`);
+    // }
 
     if (dte.status === 'paid') {
       const paymentData: PaymentData = {

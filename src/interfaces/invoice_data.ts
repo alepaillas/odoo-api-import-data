@@ -23,4 +23,5 @@ export interface InvoiceData {
   ref?: string;
   narration?: string;
   journal_id: number;
+  reversed_entry_id?: number;
 }
