@@ -22,4 +22,5 @@ export interface InvoiceData {
   invoice_payment_term_id: number;
   ref?: string;
   narration?: string;
+  journal_id: number;
 }

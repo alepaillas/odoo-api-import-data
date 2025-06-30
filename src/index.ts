@@ -10,13 +10,15 @@ import type { Customer } from "./types/customer.ts";
 import type { Commune } from "./types/commune.ts";
 import type { City } from "./types/city.ts";
 import type { PaymentType } from "./types/payment_type.ts";
-import { createInvoice } from "./services/invoice.ts";
+import { confirmInvoice, createInvoice } from "./services/invoice.ts";
 import { createPartner, findPartner } from "./services/partner.ts";
 import type { CreatePartnerType } from "./services/interfaces/partner.ts";
 import { findRegionByCommune } from "./services/territory.ts";
 import { paymentTermMapper } from "./utils/paymentTermMapper.ts";
 import { mapRegionToStateId } from "./utils/regionMapper.ts";
 import { createProduct, findProductByCode } from "./services/product.ts";
+import { createPayment, postPayment } from "./services/payment.ts";
+import type { PaymentData } from "./services/interfaces/payment.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -218,12 +220,38 @@ for (const dte of dtes) {
       invoice_payment_term_id: invoicePaymentType,
       ref: dte.seller_name,
       narration: `Contacto: ${dte.contact} | Nota: ${dte.comment}`,
+      journal_id: 1, // customer invoices anfisbena
+      // journal_id: 17, // facturas relbase integramundo
     };
-
     console.log(invoiceData);
 
     const newInvoice = await createInvoice(invoiceData);
     // console.log(newInvoice);
+
+    if (dte.status === 'paid') {
+      const paymentData: PaymentData = {
+        payment_method_id: 1, // manual payment
+        payment_type: 'inbound',
+        partner_id: partnerId ? partnerId : newPartnerId,
+        partner_type: 'customer',
+        amount: dte.amount_total,
+        currency_id: 45, // CLP anfisbena
+        // currency_id: 44, // CLP integramundo
+        journal_id: 6, // Bank // 10 MercadoPago
+        // communication?: string,
+        invoice_ids: [newInvoice],
+        date: dte.updated_at, // dte is updated after payment, there is no proper payment date returned
+      }
+      console.log(paymentData)
+
+      const paymentId = await createPayment(paymentData)
+      console.log(`Created payment with ID: ${paymentId}`);
+      const postedPayment = await postPayment(paymentId)
+      console.log(`Posted payment with operation ID: ${postedPayment}`);
+      await confirmInvoice(newInvoice)
+      console.log(`Confirmed invoice with ID: ${newInvoice}`);
+    }
+
   } catch (error) {
     console.error(error);
   }
