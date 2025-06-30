@@ -225,7 +225,7 @@ for (const dte of dtes) {
     const isCreditNote = moveType === 'out_refund';
 
     let dteChild: DteChild | undefined; // Initialize as undefined
-    let invoiceRef = dte.seller_name;
+    let invoiceRef = `${dte.folio} - ${dte.seller_name}`
 
     if (moveType === 'out_refund') {
       const dteChildFound = dteChildren.find((dteChild) => dteChild.dte_folio == dte.folio);
@@ -233,7 +233,7 @@ for (const dte of dtes) {
         throw new Error("DTE child not found");
       }
       dteChild = dteChildFound;
-      invoiceRef = `${dteChild.folio}`
+      invoiceRef = `${dteChild.folio} - ${dte.seller_name}`
     }
 
     const invoiceData: InvoiceData = {
@@ -246,8 +246,8 @@ for (const dte of dtes) {
       invoice_payment_term_id: invoicePaymentType,
       ref: invoiceRef,
       narration: `Contacto: ${dte.contact} | Nota: ${dte.comment}`,
-      journal_id: 1, // customer invoices anfisbena
-      // journal_id: 17, // facturas relbase integramundo
+      // journal_id: 1, // customer invoices anfisbena
+      journal_id: 17, // facturas relbase integramundo
     };
     console.log(invoiceData);
 
@@ -267,6 +267,10 @@ for (const dte of dtes) {
     //   console.log(`Cancelled invoice with ID: ${newInvoice}`);
     // }
 
+    // First confirm the invoice
+    await confirmInvoice(newInvoice);
+    console.log(`Confirmed invoice with ID: ${newInvoice}`);
+
     if (dte.status === 'paid') {
       const paymentData: PaymentData = {
         payment_method_id: 1, // manual payment
@@ -274,16 +278,12 @@ for (const dte of dtes) {
         partner_id: partnerId ? partnerId : newPartnerId,
         partner_type: 'customer',
         amount: dte.amount_total,
-        currency_id: 45, // CLP anfisbena
-        // currency_id: 44, // CLP integramundo
+        // currency_id: 45, // CLP anfisbena
+        currency_id: 44, // CLP integramundo
         journal_id: 6, // Bank // 10 MercadoPago
         date: dte.updated_at, // dte is updated after payment, there is no proper payment date returned
       }
       console.log(paymentData);
-
-      // First confirm the invoice
-      await confirmInvoice(newInvoice);
-      console.log(`Confirmed invoice with ID: ${newInvoice}`);
 
       // Process payment and reconcile in one step
       const paymentId = await processPaymentAndReconcile(paymentData, newInvoice);
