@@ -17,7 +17,7 @@ import { findRegionByCommune } from "./services/territory.ts";
 import { paymentTermMapper } from "./utils/paymentTermMapper.ts";
 import { mapRegionToStateId } from "./utils/regionMapper.ts";
 import { createProduct, findProductByCode } from "./services/product.ts";
-import { createPayment, postPayment } from "./services/payment.ts";
+import { createPayment, isInvoicePaid, postPayment, processPaymentAndReconcile } from "./services/payment.ts";
 import type { PaymentData } from "./services/interfaces/payment.ts";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -238,18 +238,24 @@ for (const dte of dtes) {
         currency_id: 45, // CLP anfisbena
         // currency_id: 44, // CLP integramundo
         journal_id: 6, // Bank // 10 MercadoPago
-        // communication?: string,
-        invoice_ids: [newInvoice],
         date: dte.updated_at, // dte is updated after payment, there is no proper payment date returned
       }
-      console.log(paymentData)
+      console.log(paymentData);
 
-      const paymentId = await createPayment(paymentData)
-      console.log(`Created payment with ID: ${paymentId}`);
-      const postedPayment = await postPayment(paymentId)
-      console.log(`Posted payment with operation ID: ${postedPayment}`);
-      await confirmInvoice(newInvoice)
+      // First confirm the invoice
+      await confirmInvoice(newInvoice);
       console.log(`Confirmed invoice with ID: ${newInvoice}`);
+
+      // Process payment and reconcile in one step
+      const paymentId = await processPaymentAndReconcile(paymentData, newInvoice);
+
+      // Verify the invoice is now paid
+      const isPaid = await isInvoicePaid(newInvoice);
+      console.log(`Invoice ${newInvoice} payment status: ${isPaid ? 'PAID' : 'NOT PAID'}`);
+
+      if (!isPaid) {
+        console.warn(`Warning: Invoice ${newInvoice} may not be fully reconciled`);
+      }
     }
 
   } catch (error) {
