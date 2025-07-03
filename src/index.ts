@@ -87,6 +87,13 @@ for (const file of filteredFiles) {
 
   for (const dte of dtes) {
     try {
+      // Check if an invoice with the same document number already exists
+      const existingInvoiceId = await findInvoice(`${dte.folio}`);
+      if (existingInvoiceId) {
+        console.log(`Invoice with document number ${dte.folio} already exists. Skipping creation.`);
+        continue; // Skip to the next iteration if the invoice exists
+      }
+
       const partner = customers.find(
         (customer) => customer.id == dte.customer_id
       );

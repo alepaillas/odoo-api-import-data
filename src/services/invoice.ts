@@ -55,12 +55,13 @@ export async function findInvoice(documentNumber: string): Promise<number | null
             params: {
                 model: 'account.move',
                 method: 'search',
-                args: [[['l10n_latam_document_number', '=', documentNumber]]],
+                args: [[['sequence_number', '=', documentNumber]]],
                 kwargs: {},
             },
         };
 
         const result = await makeAuthenticatedRequest(searchData);
+        console.log(result)
 
         if (!result.result || !Array.isArray(result.result) || result.result.length === 0) {
             console.log('No invoice found with document number:', documentNumber);
