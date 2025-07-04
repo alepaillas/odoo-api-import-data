@@ -567,6 +567,10 @@
                         "codigo": "li0110"
                     },
                     {
+                        "nombre": "San Fco De Mostazal",
+                        "codigo": "li0110"
+                    },
+                    {
                         "nombre": "Olivar",
                         "codigo": "li0111"
                     },
@@ -592,6 +596,10 @@
                     },
                     {
                         "nombre": "San Vicente",
+                        "codigo": "li0117"
+                    },
+                    {
+                        "nombre": "San Vicente T T",
                         "codigo": "li0117"
                     }
                 ]
@@ -985,6 +993,10 @@
                     },
                     {
                         "nombre": "Alto Biobío",
+                        "codigo": "bi0314"
+                    },
+                    {
+                        "nombre": "Bio Bio",
                         "codigo": "bi0314"
                     }
                 ]
@@ -1506,6 +1518,10 @@
                         "codigo": "ai0201"
                     },
                     {
+                        "nombre": "Aysen",
+                        "codigo": "ai0201"
+                    },
+                    {
                         "nombre": "Cisnes",
                         "codigo": "ai0202"
                     },
@@ -1623,6 +1639,10 @@
                         "codigo": "ma0401"
                     },
                     {
+                        "nombre": "Puerto Natales",
+                        "codigo": "ma0401"
+                    },
+                    {
                         "nombre": "Torres del Paine",
                         "codigo": "ma0402"
                     }
@@ -1662,6 +1682,10 @@
                     },
                     {
                         "nombre": "Estación Central",
+                        "codigo": "rm0106"
+                    },
+                    {
+                        "nombre": "EST CENTRAL",
                         "codigo": "rm0106"
                     },
                     {
@@ -1803,7 +1827,15 @@
                         "codigo": "rm0302"
                     },
                     {
+                        "nombre": "Batuco",
+                        "codigo": "rm0302"
+                    },
+                    {
                         "nombre": "Tiltil",
+                        "codigo": "rm0303"
+                    },
+                    {
+                        "nombre": "Til Til",
                         "codigo": "rm0303"
                     }
                 ]

@@ -47,7 +47,7 @@ export async function getInvoice(invoiceId: number): Promise<any> {
     }
 }
 
-export async function findInvoice(documentNumber: string): Promise<number | null> {
+export async function findInvoice(documentNumber: string, journalId: number): Promise<number | null> {
     try {
         const searchData = {
             jsonrpc: '2.0',
@@ -55,21 +55,28 @@ export async function findInvoice(documentNumber: string): Promise<number | null
             params: {
                 model: 'account.move',
                 method: 'search',
-                args: [[['sequence_number', '=', documentNumber]]],
+                args: [
+                    [
+                        ['sequence_number', '=', documentNumber],
+                        ['journal_id', '=', journalId]
+                    ]
+                ],
                 kwargs: {},
             },
         };
 
+        console.log('Searching for document number:', documentNumber, 'in journal:', journalId);
+        // console.log('Search query:', searchData);
+
         const result = await makeAuthenticatedRequest(searchData);
-        console.log(result)
+        console.log('Search result:', result);
 
         if (!result.result || !Array.isArray(result.result) || result.result.length === 0) {
-            console.log('No invoice found with document number:', documentNumber);
+            console.log('No invoice found with document number:', documentNumber, 'in journal:', journalId);
             return null;
         }
 
         return result.result[0];
-
     } catch (error) {
         console.error('Error finding invoice:', error);
         throw error;
