@@ -26,11 +26,11 @@ const __dirname = path.dirname(__filename);
 
 // Define your date range
 const startDate = new Date('2017-09-01');
-const endDate = new Date('2023-12-30');
+const endDate = new Date('2024-12-30');
 
 // Directory where your Excel files are stored
-// const directoryPath = path.resolve(__dirname, "../data/dtes/notas de credito");
-const directoryPath = path.resolve(__dirname, "../data/dtes/facturas");
+const directoryPath = path.resolve(__dirname, "../data/dtes/notas de credito");
+// const directoryPath = path.resolve(__dirname, "../data/dtes/facturas");
 
 // Read all files in the directory
 const files = readdirSync(directoryPath);
@@ -38,7 +38,7 @@ const files = readdirSync(directoryPath);
 // Filter files based on the date range
 const filteredFiles = files.filter(file => {
   // Extract year and month from the filename
-  const match = file.match(/dtes_type33_(\d{4})_(\d{2})\.xlsx/);
+  const match = file.match(/dtes_type61_(\d{4})_(\d{2})\.xlsx/);
   if (match) {
     const year = parseInt(match[1], 10);
     const month = parseInt(match[2], 10) - 1; // Months are 0-indexed in JavaScript

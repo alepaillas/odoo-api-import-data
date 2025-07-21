@@ -6,7 +6,8 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node  --experimental-transform-types ./src/index.ts"
+    "dev": "node  --experimental-transform-types ./src/index.ts",
+    "process-purchase-orders": "node  --experimental-transform-types ./src/process-purchase-orders.ts"
   },
   "repository": {
     "type": "git",
