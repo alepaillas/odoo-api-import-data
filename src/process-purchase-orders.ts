@@ -51,8 +51,11 @@ if (purchaseOrdersSheet && purchaseOrdersSheet["!ref"]) {
             }
         });
 
-        // Use for...of loop to handle asynchronous operations sequentially
-        for (const purchaseOrder of purchaseOrdersWithDetails.values()) {
+        // Convert the Map values to an array and reverse it
+        const purchaseOrdersArray = Array.from(purchaseOrdersWithDetails.values()).reverse();
+
+        // Use for...of loop to handle asynchronous operations sequentially in reverse order
+        for (const purchaseOrder of purchaseOrdersArray) {
             try {
                 console.log(`Purchase Order: ${purchaseOrder["Nº OC"]}`);
                 console.log("Details:", purchaseOrder.details);
@@ -106,7 +109,7 @@ if (purchaseOrdersSheet && purchaseOrdersSheet["!ref"]) {
                         const purchaseOrderId = await createPurchaseOrder(purchaseOrderData)
                         console.log(`Created Purchase Order with ID: ${purchaseOrderId}`)
 
-                        await sleep(500); // Wait for 2 seconds before the next iteration
+                        // await sleep(500); // Wait for 2 seconds before the next iteration
                     } else {
                         console.error(`Couldn't find a product in the order details.`)
                     }
