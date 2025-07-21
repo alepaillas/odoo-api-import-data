@@ -1,6 +1,6 @@
 // src/services/purchaseOrder.ts
-import { makeAuthenticatedRequest } from './auth';
-import type { CreatePurchaseOrderType } from './interfaces/purchaseOrder';
+import { makeAuthenticatedRequest } from './auth.ts';
+import type { CreatePurchaseOrderType } from './interfaces/purchaseOrder.ts';
 
 export async function createPurchaseOrder(purchaseOrder: CreatePurchaseOrderType): Promise<number> {
     try {
@@ -10,19 +10,7 @@ export async function createPurchaseOrder(purchaseOrder: CreatePurchaseOrderType
             params: {
                 model: 'purchase.order',
                 method: 'create',
-                args: [{
-                    partner_id: purchaseOrder.partner_id,
-                    date_order: purchaseOrder.date_order,
-                    date_planned: purchaseOrder.date_planned,
-                    user_id: purchaseOrder.user_id,
-                    origin: purchaseOrder.origin,
-                    payment_term_id: purchaseOrder.payment_term_id,
-                    order_line: purchaseOrder.order_line.map(line => ({
-                        product_id: line.product_id,
-                        product_qty: line.product_qty,
-                        price_unit: line.price_unit,
-                    })),
-                }],
+                args: [purchaseOrder],
                 kwargs: {},
             },
         };

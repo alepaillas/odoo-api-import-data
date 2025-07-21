@@ -6,6 +6,10 @@ import type { PurchaseOrder, PurchaseOrderDetail } from "./types/purchaseOrder";
 import { findPartner } from "./services/partner.ts";
 import { sleep } from "./utils/sleep.ts";
 import { paymentTermMapper } from "./utils/purchaseOrderPaymentTermMapper.ts";
+import type { CreatePurchaseOrderType, PurchaseOrderLine } from "./services/interfaces/purchaseOrder.ts";
+import { findProductByCode } from "./services/product.ts";
+import { createPurchaseOrder } from "./services/purchaseOrders.ts";
+import { convertDateFormat } from "./utils/convertDateFormat.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,21 +62,56 @@ if (purchaseOrdersSheet && purchaseOrdersSheet["!ref"]) {
                     console.error(`Partner with RUT: ${purchaseOrder.RUT} not found, skipping purchase order.`);
                 } else {
                     console.log(`Partner with RUT ${purchaseOrder.RUT} found with id ${partnerId}`);
+
+                    const paymentTermId = paymentTermMapper(purchaseOrder["Forma de pago"])
+
+                    let orderLines: PurchaseOrderLine[] = [];
+                    for (const purchaseOrderDetail of purchaseOrder.details) {
+                        const productId = await findProductByCode(purchaseOrderDetail.Código);
+
+                        if (!productId) {
+                            console.error(
+                                `Product with code ${purchaseOrderDetail.Código} not found.`
+                            );
+
+                            break
+                        } else {
+                            console.log(
+                                `Product with code ${purchaseOrderDetail.Código} found with ID: ${productId}.`
+                            );
+
+                            const orderLine: PurchaseOrderLine = [0, 0, {
+                                product_id: productId,
+                                product_qty: purchaseOrderDetail.Cantidad,
+                                price_unit: purchaseOrderDetail.Precio
+                            }]
+
+                            orderLines.push(orderLine)
+                        }
+                    }
+
+                    if (orderLines.length === purchaseOrder.details.length) {
+                        const purchaseOrderData: CreatePurchaseOrderType = {
+                            partner_id: partnerId,
+                            date_order: convertDateFormat(purchaseOrder["Fecha emisión"]),
+                            date_planned: convertDateFormat(purchaseOrder["Fecha entrega"]),
+                            user_id: 2,
+                            origin: `${purchaseOrder["Nº OC"]}-${purchaseOrder["Realizada por"]}`,
+                            payment_term_id: paymentTermId,
+                            order_line: orderLines,
+                        }
+
+                        console.log(purchaseOrderData)
+
+                        const purchaseOrderId = await createPurchaseOrder(purchaseOrderData)
+                        console.log(`Created Purchase Order with ID: ${purchaseOrderId}`)
+
+                        await sleep(500); // Wait for 2 seconds before the next iteration
+                    } else {
+                        console.error(`Couldn't find a product in the order details.`)
+                    }
+
                 }
-
-                const paymentTermId = paymentTermMapper(purchaseOrder["Forma de pago"])
-
-                const purchaseOrderData = {
-                    partner_id: partnerId,
-                    date_order: purchaseOrder["Fecha emisión"],
-                    date_planned: purchaseOrder["Fecha entrega"],
-                    user_id: "2",
-                    origin: purchaseOrder["Nº OC"],
-                    payment_term_id: paymentTermId,
-                    order_line: orderLines,
-                }
-
-                await sleep(500); // Wait for 2 seconds before the next iteration
             } catch (error) {
                 console.error(error);
             }
