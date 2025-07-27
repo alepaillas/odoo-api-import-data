@@ -47,7 +47,7 @@ export async function getInvoice(invoiceId: number): Promise<any> {
     }
 }
 
-export async function findInvoice(documentNumber: string, journalId: number): Promise<number | null> {
+export async function findInvoice(documentNumber: string, journalId: number, moveType: string): Promise<number | null> {
     try {
         const searchData = {
             jsonrpc: '2.0',
@@ -58,21 +58,20 @@ export async function findInvoice(documentNumber: string, journalId: number): Pr
                 args: [
                     [
                         ['sequence_number', '=', documentNumber],
-                        ['journal_id', '=', journalId]
+                        ['journal_id', '=', journalId],
+                        ['move_type', '=', moveType]
                     ]
                 ],
                 kwargs: {},
             },
         };
 
-        console.log('Searching for document number:', documentNumber, 'in journal:', journalId);
-        // console.log('Search query:', searchData);
-
+        console.log('Searching for document number:', documentNumber, 'in journal:', journalId, 'with move type:', moveType);
         const result = await makeAuthenticatedRequest(searchData);
         console.log('Search result:', result);
 
         if (!result.result || !Array.isArray(result.result) || result.result.length === 0) {
-            console.log('No invoice found with document number:', documentNumber, 'in journal:', journalId);
+            console.log('No invoice found with document number:', documentNumber, 'in journal:', journalId, 'with move type:', moveType);
             return null;
         }
 
@@ -82,6 +81,7 @@ export async function findInvoice(documentNumber: string, journalId: number): Pr
         throw error;
     }
 }
+
 
 export async function confirmInvoice(invoiceId: number): Promise<void> {
     try {

@@ -20,6 +20,7 @@ export interface InvoiceData {
   invoice_line_ids: InvoiceLine[];
   invoice_date_due: string;
   invoice_payment_term_id: number;
+  invoice_user_id: number;
   ref?: string;
   narration?: string;
   journal_id: number;

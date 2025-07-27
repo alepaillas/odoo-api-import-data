@@ -26,7 +26,7 @@ const __dirname = path.dirname(__filename);
 
 // Define your date range
 const startDate = new Date('2017-09-01');
-const endDate = new Date('2024-12-30');
+const endDate = new Date('2025-12-30');
 
 // Directory where your Excel files are stored
 const directoryPath = path.resolve(__dirname, "../data/dtes/notas de credito");
@@ -59,6 +59,7 @@ for (const file of filteredFiles) {
   const dtesSheet = workbook.Sheets["DTEs"];
   const jsonDtesSheet: unknown[] = XLSX.utils.sheet_to_json(dtesSheet);
   const dtes: Dte[] = jsonDtesSheet as Dte[];
+  // console.log(dtes)
 
   const productsSheet = workbook.Sheets["Products"];
   const jsonProductsSheet: unknown[] = XLSX.utils.sheet_to_json(productsSheet);
@@ -87,9 +88,13 @@ for (const file of filteredFiles) {
   const dteChildren: DteChild[] = jsonDteChildrenSheet as DteChild[];
 
   for (const dte of dtes) {
+    const moveType = getMoveType(dte.type_document);
+    const isInvoice = moveType === 'out_invoice';
+    const isCreditNote = moveType === 'out_refund';
+
     try {
       // Check if an invoice with the same document number already exists
-      const existingInvoiceId = await findInvoice(`${dte.folio}`, 17,);
+      const existingInvoiceId = await findInvoice(`${dte.folio}`, 17, moveType);
       if (existingInvoiceId) {
         console.log(`Invoice with document number ${dte.folio} already exists. Skipping creation.`);
         continue; // Skip to the next iteration if the invoice exists
@@ -249,11 +254,10 @@ for (const file of filteredFiles) {
       let invoicePaymentType: number;
       invoicePaymentType = paymentTermMapper(dte.type_payment_id);
 
-      const moveType = getMoveType(dte.type_document);
-      const isInvoice = moveType === 'out_invoice';
-      const isCreditNote = moveType === 'out_refund';
-
       let dteChild: DteChild | undefined; // Initialize as undefined
+      // console.log(dte.seller_name)
+      // console.log(dte.contact)
+      // console.log(dte.comment)
       let invoiceRef = `${dte.folio} - ${dte.seller_name}`
 
       if (moveType === 'out_refund') {
@@ -262,7 +266,7 @@ for (const file of filteredFiles) {
           throw new Error("DTE child not found");
         }
         dteChild = dteChildFound;
-        invoiceRef = `${dteChild.folio}`
+        invoiceRef = `${dte.folio} - ${dte.user_name}`
       }
 
       const invoiceData: InvoiceData = {
@@ -273,6 +277,7 @@ for (const file of filteredFiles) {
         invoice_line_ids: invoiceLines,
         invoice_date_due: dte.end_date,
         invoice_payment_term_id: invoicePaymentType,
+        invoice_user_id: 2,
         ref: invoiceRef,
         narration: `Contacto: ${dte.contact} | Nota: ${dte.comment}`,
         // journal_id: 1, // customer invoices anfisbena

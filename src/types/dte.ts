@@ -36,6 +36,7 @@ export interface Dte {
   type_option_ref: string | null;
   track_id: string | null;
   user_id: number | null;
+  user_name: string;
   is_load_xml: boolean;
   is_manual: boolean;
   amount_iva: number;
