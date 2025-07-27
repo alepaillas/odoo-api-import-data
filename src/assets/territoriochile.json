@@ -323,7 +323,7 @@
                         "nombre": "Concón",
                         "codigo": "vs0103"
                     },
-                                        {
+                    {
                         "nombre": "Con Con",
                         "codigo": "vs0103"
                     },
@@ -417,6 +417,10 @@
                     },
                     {
                         "nombre": "Calera",
+                        "codigo": "vs0502"
+                    },
+                    {
+                        "nombre": "La Calera",
                         "codigo": "vs0502"
                     },
                     {
@@ -1095,6 +1099,10 @@
                     {
                         "nombre": "Treguaco",
                         "codigo": "nb0207"
+                    },
+                    {
+                        "nombre": "Trehuaco",
+                        "codigo": "nb0207"
                     }
                 ]
             },
@@ -1205,7 +1213,7 @@
                         "nombre": "Teodoro Schmidt",
                         "codigo": "ar0117"
                     },
-                                        {
+                    {
                         "nombre": "Hualpin",
                         "codigo": "ar0117"
                     },
