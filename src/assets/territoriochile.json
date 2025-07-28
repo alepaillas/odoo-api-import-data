@@ -100,6 +100,10 @@
                         "codigo": "an0101"
                     },
                     {
+                        "nombre": "Antogasta",
+                        "codigo": "an0101"
+                    },
+                    {
                         "nombre": "Mejillones",
                         "codigo": "an0102"
                     },
@@ -316,6 +320,10 @@
                         "codigo": "vs0101"
                     },
                     {
+                        "nombre": "Curauma",
+                        "codigo": "vs0101"
+                    },
+                    {
                         "nombre": "Casablanca",
                         "codigo": "vs0102"
                     },
@@ -483,6 +491,10 @@
                     },
                     {
                         "nombre": "Llaillay",
+                        "codigo": "vs0703"
+                    },
+                    {
+                        "nombre": "Llay Llay",
                         "codigo": "vs0703"
                     },
                     {
@@ -1837,6 +1849,10 @@
                     },
                     {
                         "nombre": "San José de Maipo",
+                        "codigo": "rm0203"
+                    },
+                    {
+                        "nombre": "Altos Del Maipo",
                         "codigo": "rm0203"
                     }
                 ]
