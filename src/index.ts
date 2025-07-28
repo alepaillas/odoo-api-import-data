@@ -21,6 +21,7 @@ import { createPayment, isInvoicePaid, postPayment, processPaymentAndReconcile }
 import type { PaymentData } from "./services/interfaces/payment.ts";
 import { getMoveType } from "./utils/getMoveType.ts";
 import CommuneCache from "./cache/commune_cache.ts";
+import CityCache from "./cache/city_cache.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,23 +31,35 @@ const startDate = new Date('2017-09-01');
 const endDate = new Date('2025-12-31');
 
 // Directory where your Excel files are stored
-const directoryPath = path.resolve(__dirname, "../data/dtes/facturas");
+// const directoryPath = path.resolve(__dirname, "../data/dtes/facturas");
+const directoryPath = path.resolve(__dirname, "../data/dtes/notas de credito");
 
-// Initialize the commune cache
+// Initialize the caches
 const communeCache = CommuneCache.getInstance();
+const cityCache = CityCache.getInstance();
 
 async function main() {
   try {
-    // Initialize the commune cache before processing
+    // Initialize the caches before processing
     console.log("Initializing commune cache...");
     await communeCache.initialize();
 
-    // Optional: Export the cache to a file for future use
+    console.log("Initializing city cache...");
+    await cityCache.initialize();
+
+    // Optional: Export the caches to files for future use
     try {
-      const cacheExportPath = path.resolve(__dirname, "../data/communes/all_communes.xlsx");
-      await communeCache.exportToFile(cacheExportPath);
+      const communeCacheExportPath = path.resolve(__dirname, "../data/communes/all_communes.xlsx");
+      await communeCache.exportToFile(communeCacheExportPath);
     } catch (error) {
       console.warn("Could not export commune cache, but continuing with processing:", error.message);
+    }
+
+    try {
+      const cityCacheExportPath = path.resolve(__dirname, "../data/cities/all_cities.xlsx");
+      await cityCache.exportToFile(cityCacheExportPath);
+    } catch (error) {
+      console.warn("Could not export city cache, but continuing with processing:", error.message);
     }
 
     // Read all files in the directory
@@ -55,7 +68,7 @@ async function main() {
     // Filter files based on the date range
     const filteredFiles = files.filter(file => {
       // Extract year and month from the filename
-      const match = file.match(/dtes_type33_(\d{4})_(\d{2})\.xlsx/);
+      const match = file.match(/dtes_type61_(\d{4})_(\d{2})\.xlsx/);
       if (match) {
         const year = parseInt(match[1], 10);
         const month = parseInt(match[2], 10) - 1; // Months are 0-indexed in JavaScript
@@ -92,9 +105,12 @@ async function main() {
         communes = jsonCommunesSheet as Commune[];
       }
 
-      const citiesSheet = workbook.Sheets["Cities"];
-      const jsonCitiesSheet: unknown[] = XLSX.utils.sheet_to_json(citiesSheet);
-      const cities: City[] = jsonCitiesSheet as City[];
+      // Load cities from current file (if available) but fallback to cache
+      let cities: City[] = [];
+      if (workbook.Sheets["Cities"]) {
+        const jsonCitiesSheet: unknown[] = XLSX.utils.sheet_to_json(workbook.Sheets["Cities"]);
+        cities = jsonCitiesSheet as City[];
+      }
 
       const paymentTypesSheet = workbook.Sheets["Payment_Types"];
       const jsonPaymentTypesSheet: unknown[] = XLSX.utils.sheet_to_json(paymentTypesSheet);
@@ -124,19 +140,23 @@ async function main() {
 
           // Try to find commune in current file first, then fallback to cache
           let commune = communes.find((commune) => commune.id == partner.commune_id);
-
           if (!commune) {
             console.log(`Commune with ID ${partner.commune_id} not found in current file, checking cache...`);
             commune = communeCache.findById(partner.commune_id);
           }
-
           if (!commune) {
             console.error(`Commune with ID ${partner.commune_id} not found in file or cache`);
             throw new Error("Commune not found");
           }
 
-          const city = cities.find((city) => city.id == partner.city_id);
+          // Try to find city in current file first, then fallback to cache
+          let city = cities.find((city) => city.id == partner.city_id);
           if (!city) {
+            console.log(`City with ID ${partner.city_id} not found in current file, checking cache...`);
+            city = cityCache.findById(partner.city_id);
+          }
+          if (!city) {
+            console.error(`City with ID ${partner.city_id} not found in file or cache`);
             throw new Error("City not found");
           }
 
